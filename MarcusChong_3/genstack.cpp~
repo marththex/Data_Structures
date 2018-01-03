@@ -1,0 +1,62 @@
+#include "genstack.h"
+#include <iostream>
+#include <string>
+#include<fstream>
+
+using namespace std;
+
+GenStack::GenStack(int maxSize)
+{
+	myArray = new char(maxSize);
+	max = maxSize;
+	top = -1;
+
+}
+
+GenStack::~GenStack()
+{
+	delete myArray;
+	cout << "object destroyed" << endl;
+}
+
+void GenStack::push(char data)
+{
+	
+	myArray[++top] = data;
+}
+
+
+char GenStack::pop()
+{
+	
+	return myArray[top--];
+}
+
+char GenStack::peek()
+{
+	return myArray[top];
+}
+
+int GenStack::isFull()
+{
+	return (top == max-1);
+}
+
+int GenStack::isEmpty()
+{
+	return (top == -1);
+}
+
+void GenStack::resizeArray()
+{
+	size = sizeof(myArray);
+	char* newArray  = new char[size*2];
+	for(int i = 0; i < size; ++i)
+	{
+		newArray[i] = myArray[i];
+	}
+	delete[] myArray;
+	myArray  = newArray;
+	size *= 2;
+	
+}

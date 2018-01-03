@@ -1,0 +1,127 @@
+#include <iostream>
+#include "checker.h"
+#include <fstream>
+#include<string>
+
+
+
+using namespace std;
+
+GenStack stack = GenStack(20);
+
+Checker:: Checker()
+{
+	
+}
+
+Checker:: ~Checker()
+{
+
+}
+
+bool Checker::readInfile(string textfile)
+{
+	count =  0; // count # of  ( or )
+	count1 =  0;// count # of  { or }
+	count2 =  0;// count # of  { or }
+	
+	readFile.open(textfile.c_str());
+	
+	while(!readFile.eof())
+	{
+		readFile >> line;
+	
+		if(!readFile)
+		{
+			break;
+		}
+		for(int j = 0; j < line.size(); ++j)
+		{
+			if(stack.isFull())
+			{
+				stack.resizeArray();
+			}
+			cout << "Putting  into array: "<< line[j] << endl;
+			
+			if (line[j] == '(' || line[j] == '{' || line[j] == '[')
+			{
+				if(line[j] == '(')
+					count++;
+				else if(line[j] == '{')
+					count1++;
+				else if(line[j] == '[')
+					count2++;
+				stack.push(stack.myArray[j]);
+			
+			}
+		
+			else if (line[j] == ')' || line[j] == '}' || line[j] == ']')
+			{
+
+				if (stack.isEmpty())
+				{
+					return false;
+				}
+				if(line[j] == ')')
+					count++;
+				else if(line[j] == '}')
+					count1++;
+				else if(line[j] == ']')
+					count2++;
+				stack.pop();
+				
+			}	
+			cout << "stack size: "<<stack.top<< endl;
+			
+		}	
+	}
+	
+			if (stack.isEmpty())
+			{
+				return true;
+			}
+			
+			else
+			{
+				return false;
+			}
+	
+	
+	
+	readFile.close(); 
+}
+
+
+int Checker::execute()
+{
+	cout << "-----------------------------------------------------" << endl;
+	cout << "WELCOME TO DELIMITER CHECKER!" << endl;
+	cout << "-----------------------------------------------------" << endl;
+	cout << endl;
+	cout << "ENTER THE LOCATION OF THE FILE" << endl;
+	cin >> textLocation;
+	SetCurrentDirectory(textLocation);
+	cout << "ENTER THE NAME OF THE FILE. PLEASE INCLUDE AN EXTENTION (ex. .cpp, .h, .txt, etc.)." << endl;
+	cin >> textName;
+	
+	
+	if(readInfile(textName) == false)
+	{
+		if((count % 2) != 0)
+		cout << "Reached end of file: missing '(' or ')'" << endl;			
+
+		else if((count1 % 2) != 0)
+		cout << "Reached end of file: missing '{' or '}'" << endl;
+	
+		else if((count2 % 2) != 0)
+		cout << "Reached end of file: missing '[' or ']'" << endl;
+	
+	}
+	else
+	{
+		cout<< "works :D" << endl;
+	}
+	
+	return 0;
+}
+

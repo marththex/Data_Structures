@@ -1,0 +1,317 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <stdlib.h> 
+#include "GenQueue.h"
+#include "Student.h"
+
+
+
+using namespace std;
+
+class QueueError : public exception //My Exception 
+{
+	virtual const char* what() const throw()
+	{
+		return " ERROR: Out of bounds exception.";
+	}
+} queueEx;	
+
+class Registrar
+{
+	
+	private:
+		GenQueue<Student*> myQueue;
+		NaiveList<int> windowTimes;//time at the window
+		NaiveList<double> windowIdle;//time window is empty
+		NaiveList<double> calculate;
+		int calPos;
+		string textName;
+		fstream readFile;
+		string line;
+		int* timeNeed;
+		int size, time, windows, noWindows; 
+		double numStudents, avgWait, medianWait, maxSize, maxStudentWait;
+		double studentsOver10, avgWindow, maxWindows, windowsOver5, maxWindowIdle;
+		bool prev;
+		
+	public:
+		
+		Registrar()
+		{
+			timeNeed = new int(4);
+			size = 4;
+		}
+		~Registrar()
+		{
+			delete[] timeNeed;
+		}
+		void resizeArray()
+		{
+			size = sizeof(timeNeed);
+			int* newArray  = new int[size*2];
+			for(int i = 0; i < size; ++i)
+			{
+				newArray[i] = timeNeed[i];
+			}
+			delete[] timeNeed;
+			timeNeed  = newArray;
+			size *= 4;
+			
+		}
+		
+		int newStudent(int i, int j)//creates new student and puts it into the queue
+		{
+				Student* student = new Student(i,j, 0);
+				myQueue.insert(student);			
+		}
+		
+		int readInFile(string s)
+		{
+			int pos = 0, count = 0, numStudent = 0;
+			int student = 0;
+			readFile.open(s.c_str());
+			readFile >> windows;
+			maxWindows = windows;
+			while(!readFile.eof())
+			{
+				if(size%2 == 0)
+				{
+					resizeArray();
+				}	
+				readFile >> time;
+				if(!readFile)
+				{
+					break;
+				}
+				
+				readFile >> student;
+				
+				for(int i = 0; i < student; ++i)//puts the time the students needs into the array
+				{
+					readFile >> timeNeed[pos];
+					pos++;   
+					count++;
+				}
+				pos = pos-count;
+				count = 0;
+				for (int i = 0; i < student; ++i) //create new students
+				{
+					newStudent(time, timeNeed[pos]);
+					pos++;
+					
+				}
+			}
+			
+			return 0;
+		}
+		
+		int getTimeArrived()
+		{
+			try
+			{
+				if(myQueue.isEmpty())
+					throw queueEx;
+				return (myQueue.peek()) -> getTimeArrive();
+			}
+			catch (exception& e)
+			{
+				cout << e.what() << '\n';
+			}
+		}
+		
+		int getTimeNeeded()
+		{
+			try
+			{
+				if(myQueue.isEmpty())
+					throw queueEx;
+				return (myQueue.peek()) -> getTimeNeeded();
+			}
+			catch (exception& e)
+			{
+				cout << e.what() << '\n';
+			}
+		}
+		
+		int getTimeWaited()
+		{
+			try
+			{
+				if(myQueue.isEmpty())
+					throw queueEx;
+				return (myQueue.peek()) -> getTimeWaited();
+			}
+			catch (exception& e)
+			{
+				cout << e.what() << '\n';
+			}
+		}
+		
+		void setTimeWaited()
+		{
+			try
+			{
+				if(myQueue.isEmpty())
+					throw queueEx;
+				(myQueue.peek()) -> setTimeWaited();
+			}
+			catch (exception& e)
+			{
+				cout << e.what() << '\n';
+			}
+		}
+		
+		void remove()
+		{
+			try
+			{
+				if(myQueue.isEmpty())
+					throw myex;
+				myQueue.remove(); 
+			}
+			catch (exception& e)
+			{
+				cout << e.what() << '\n';
+			}
+		}
+		
+		int run()
+		{
+			cout << "-----------------------------------------" << endl;
+			cout<< "Welcome to the Registrar" << endl;	
+			cout << "-----------------------------------------" << endl;
+			cout << endl;
+			
+			cout<< "Enter the location of the text file." << endl;
+			cin >> textName;
+			while ( !(ifstream(textName.c_str())))// Checks to see if the text file exist
+			{
+				cout << "Can't find file! Please try again." << endl;
+				cin >> textName;
+			}
+			readInFile(textName);
+			cout << "Starting Size: " << myQueue.getSize() << endl;
+			cout << "Num Windows: " << windows << endl;
+			time = 0;
+			calPos = 0;
+			noWindows = 0;
+			avgWindow = 0;
+			prev = false;
+			while(!myQueue.isEmpty())
+			{	
+				cout << "-----------------------------------------" << endl;
+				cout << "Time: " << time << endl;
+				cout << "-----------------------------------------" << endl;
+				cout << endl;
+				cout << "# windows: " << windows << endl;
+				cout <<"noWindows: " << noWindows << endl;
+				
+				while(getTimeArrived() <= time)//if customer arrives
+				{
+					
+					if(windows != 0)// if there are windows open
+					{
+						
+						windows--;
+						windowTimes.insertBack(getTimeNeeded());
+						avgWait = avgWait + getTimeWaited();
+						calculate.insertBack(getTimeWaited());	
+						windowIdle.insertBack((time+noWindows)-getTimeArrived());
+						cout << "getback: " << windowIdle.getBack() << endl;
+						avgWindow = avgWindow + (time+noWindows)-getTimeArrived();	
+						if(myQueue.getSize() != 0)
+						{
+							remove();
+							numStudents++;	
+						}
+						else
+						{
+							break;
+						}
+					
+					}
+					
+						else// no windows open
+						{
+							noWindows++;
+							break;
+						}
+	
+					
+				}
+				if(!myQueue.isEmpty())	
+				{
+					for(int i = 0; i < windowTimes.getSize(); ++i)//checks if people left the windows
+					{
+						
+						if(windowTimes.getAt(i) == 0)
+							windows++;
+						windowTimes.setWTimeWaited(i); 
+						if(windowTimes.getAt(i) < 0)
+							windowTimes.remainZero(i);	
+					
+					}
+					
+					for(int j = 0; j < myQueue.getSize(); ++j)//increases waittimes for everyone in line
+					{
+						if(getTimeArrived() <= time)//only incresases waittime if they arrive
+							(myQueue.getAt(j)) -> setTimeWaited();
+							
+					}
+					time++;
+				
+				}
+				else
+					break;
+			}
+			
+		
+			calculate.sorting();
+			windowIdle.sorting();
+			maxStudentWait = calculate.getAt(calculate.getSize()-1);//The longest student wait time.
+			maxWindowIdle = windowIdle.getAt(windowIdle.getSize()-1);//The longest window idle time
+			int num;
+			studentsOver10 = 0;
+			windowsOver5 = 0; 
+			for(int j = 0; j < calculate.getSize(); ++j)
+			{
+	
+				if(calculate.getAt(j) > 10)//The number of students waiting over 10 minutes
+					studentsOver10++;
+			}
+			avgWindow = 0;
+			for(int m = 0; m < windowIdle.getSize(); ++m)// The mean window idle time
+			{
+				cout << "window:" << windowIdle.getAt(m) << endl;
+				if(windowIdle.getAt(m) > 5)//Number of windows idle for over 5 minutes.
+					windowsOver5++;
+					
+			}
+			
+			if(calculate.getSize() % 2 == 0) // if even amount of students
+			{	
+				int a, b;
+				a = calculate.getSize() / 2;
+				b = a+1;
+				medianWait = (calculate.getAt(a) + calculate.getAt(a))/2;
+			}
+			else
+			{
+				medianWait = calculate.getAt((calculate.getSize() / 2));
+			}
+		
+			cout << "The mean student wait time: " << avgWait/numStudents << endl;
+			cout << "The median student wait time: " << medianWait << endl;
+			cout << "The longest student wait time: " << maxStudentWait << endl;
+			cout << "The number of students waiting over 10 minutes: " << studentsOver10 << endl;
+			cout << "The mean window idle time: " << avgWindow/windowIdle.getSize() << endl;
+			cout << "The longest window idle time: " << maxWindowIdle << endl;
+			cout << "Number of windows idle for over 5 minutes: " << windowsOver5 << endl;
+			
+			return 0;
+			
+		}
+	
+		
+};

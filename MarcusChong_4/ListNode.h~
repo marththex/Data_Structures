@@ -1,0 +1,27 @@
+
+template <typename E>
+class ListNode 
+{
+	public:
+		E data;
+		ListNode *next;
+		ListNode *prev;
+
+		ListNode()
+		{
+
+		}
+		~ListNode()
+		{
+			if(next != NULL)
+				delete next;
+		}
+
+		ListNode(E d)
+		{
+			data = d;
+			next = NULL;
+			prev = NULL;
+		}
+		
+};
